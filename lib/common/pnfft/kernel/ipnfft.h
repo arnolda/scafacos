@@ -128,6 +128,10 @@ typedef ptrdiff_t INT;
 #  define K(x) ((R) x)
 #endif
 
+/* internal flags */
+#define PNFFTI_TRAFO_C2C            (1U<< 0)
+#define PNFFTI_TRAFO_C2R            (1U<< 1)
+
 #define A(ex) /* nothing */
 
 #define PNFFT_PRINT_TIMER_BASIC    (1U<<0)
