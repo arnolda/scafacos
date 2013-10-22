@@ -30,7 +30,8 @@ check_PROGRAMS += \
 	check_adj check_adj_transposed \
 	check_vs_pfft \
 	pnfft_test \
-	pnfft_test_adv
+	pnfft_test_adv \
+	pnfft_test_adv_c2r
 #endif
 
 EXTRA_DIST = \
