@@ -1759,7 +1759,7 @@ void PNX(trafo_B_grad_ik)(
     m0 = PNFFT_PLAIN_INDEX_3D(u_j, local_ngc);
     if(ths->pnfft_flags & PNFFT_REAL_F)
       PNX(assign_f_r2r)(
-          ths, p, (R*)ths->g2, pre_psi, 2*m0, local_ngc, cutoff, 2, 0,
+          ths, p, ths->g2, pre_psi, 2*m0, local_ngc, cutoff, 2, 0,
           f + 2*ind);
     else
       PNX(assign_f_c2c)(
@@ -1920,19 +1920,19 @@ void PNX(trafo_B_grad_ad)(
          && ths->compute_flags & PNFFT_COMPUTE_GRAD_F){
         /* compute f and grad_f at once */
         PNX(assign_f_and_grad_f_r2r)(
-            ths, p, (R*)ths->g2, pre_psi, pre_dpsi, 2*m0, local_ngc, cutoff, 2, 2, 0, 
+            ths, p, ths->g2, pre_psi, pre_dpsi, 2*m0, local_ngc, cutoff, 2, 2, 0, 
             ths->f + j*2, ths->grad_f + 3*j*2);
       }
       else if(ths->compute_flags & PNFFT_COMPUTE_F){
         /* compute f */
         PNX(assign_f_r2r)(
-            ths, p, (R*)ths->g2, pre_psi, 2*m0, local_ngc, cutoff, 2, 0,
+            ths, p, ths->g2, pre_psi, 2*m0, local_ngc, cutoff, 2, 0,
             ths->f + j*2);
       } 
       else if(ths->compute_flags & PNFFT_COMPUTE_GRAD_F){
         /* compute grad_f */
         PNX(assign_grad_f_r2r)(
-            ths, p, (R*)ths->g2, pre_psi, pre_dpsi, 2*m0, local_ngc, cutoff, 2, 2, 0,
+            ths, p, ths->g2, pre_psi, pre_dpsi, 2*m0, local_ngc, cutoff, 2, 2, 0,
             ths->grad_f + 3*j*2);
       }
     } else {
@@ -1941,7 +1941,7 @@ void PNX(trafo_B_grad_ad)(
         /* compute f and grad_f at once */
         if(ths->pnfft_flags & PNFFT_REAL_F)
           PNX(assign_f_and_grad_f_r2r)(
-              ths, p, (R*)ths->g2, pre_psi, pre_dpsi,
+              ths, p, ths->g2, pre_psi, pre_dpsi,
               2*m0, local_ngc, cutoff, 2, 2, 0,
               ths->f + j*2, ths->grad_f + 3*j*2);
         else
@@ -2005,19 +2005,19 @@ void PNX(trafo_B_grad_ad)(
          && ths->compute_flags & PNFFT_COMPUTE_GRAD_F){
         /* compute f and grad_f at once */
         PNX(assign_f_and_grad_f_r2r)(
-            ths, p, (R*)ths->g2, pre_psi, pre_dpsi, 2*m0+1, local_ngc, cutoff, 2, 2, 1, 
+            ths, p, ths->g2, pre_psi, pre_dpsi, 2*m0+1, local_ngc, cutoff, 2, 2, 1, 
             ths->f + j*2, ths->grad_f + 3*j*2);
       }
       else if(ths->compute_flags & PNFFT_COMPUTE_F){
         /* compute f */
         PNX(assign_f_r2r)(
-            ths, p, (R*)ths->g2, pre_psi, 2*m0+1, local_ngc, cutoff, 2, 1,
+            ths, p, ths->g2, pre_psi, 2*m0+1, local_ngc, cutoff, 2, 1,
             ths->f + j*2);
       } 
       else if(ths->compute_flags & PNFFT_COMPUTE_GRAD_F){
         /* compute grad_f */
         PNX(assign_grad_f_r2r)(
-            ths, p, (R*)ths->g2, pre_psi, pre_dpsi, 2*m0+1, local_ngc, cutoff, 2, 2, 1,
+            ths, p, ths->g2, pre_psi, pre_dpsi, 2*m0+1, local_ngc, cutoff, 2, 2, 1,
             ths->grad_f + 3*j*2);
       }
 
@@ -2074,7 +2074,7 @@ void PNX(adjoint_B)(
   INT local_no[3], local_no_start[3];
   INT gcells_below[3], gcells_above[3];
   INT local_ngc[3], local_ngc_total;
-  
+
   local_size_B(ths,
       local_no, local_no_start);
 
@@ -2241,7 +2241,7 @@ static void loop_over_particles_adj_interlaced_0(
     m0 = PNFFT_PLAIN_INDEX_3D(u_j, local_ngc);
     PNX(spread_f_r2r)(
         ths, p, (R)ths->f[j*2], pre_psi, 2*m0, local_ngc, cutoff, 2, 0,
-        (R*)ths->g2);
+        ths->g2);
   }
 
   if(pre_psi != NULL)
@@ -2295,7 +2295,7 @@ static void loop_over_particles_adj_interlaced_1(
     m0 = PNFFT_PLAIN_INDEX_3D(u_j, local_ngc);
     PNX(spread_f_r2r)(
         ths, p, (R)ths->f[j*2], pre_psi, 2*m0+1, local_ngc, cutoff, 2, 1,
-        (R*)ths->g2);
+        ths->g2);
   }
 
   if(pre_psi != NULL)
