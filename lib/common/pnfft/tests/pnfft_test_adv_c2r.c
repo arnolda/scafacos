@@ -34,7 +34,7 @@ int main(int argc, char **argv){
   /* Set default values */
   N[0] = N[1] = N[2] = 16;
   np[0]=2; np[1]=2; np[2]=2;
-  local_M = N[0]*N[1]*N[2]/(np[0]*np[1]*np[2]);
+  local_M = (N[0]*N[1]*(N[2]/2 + 1)*2)/(np[0]*np[1]*np[2]);
   
   /* Print infos */
   pfft_printf(MPI_COMM_WORLD, "******************************************************************************************************\n");
