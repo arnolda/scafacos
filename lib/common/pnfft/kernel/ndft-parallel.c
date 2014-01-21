@@ -27,6 +27,8 @@
 #include "sinc.h"
 #include "matrix_D.h"
 
+#include <stdio.h>
+
 #define PNFFT_ENABLE_CALC_INTPOL_NODES 0
 #define USE_EWALD_SPLITTING_FUNCTION_AS_WINDOW 0
 #define TUNE_B_FOR_EWALD_SPLITTING 0
@@ -463,6 +465,7 @@ PNX(plan) PNX(init_internal)(
     ths->N[t]= N[t];
     ths->n[t]= n[t];
     ths->no[t]= no[t];
+    printf("N: %d, n: %d, no: %d\n", N[t], n[t], no[t]);
   }
 
   ths->local_N        = (INT*) PNX(malloc)(sizeof(INT) * (size_t) d);
@@ -566,6 +569,9 @@ PNX(plan) PNX(init_internal)(
 
   ths->local_N_total  = PNX(prod_INT)(d, ths->local_N);
   ths->local_no_total = PNX(prod_INT)(d, ths->local_no);
+
+  for (int t = 0; t<d; t++)
+    printf("d: %d, N: %d, no: %d, N_start: %d, no_start: %d\n", t, ths->local_N[t], ths->local_no[t], ths->local_N_start[t], ths->local_no_start[t]);
 
   if(pnfft_flags & PNFFT_MALLOC_F_HAT)
     ths->f_hat = (ths->local_N_total) ? (C*) PNX(malloc)(sizeof(C) * (size_t) ths->local_N_total) : NULL;

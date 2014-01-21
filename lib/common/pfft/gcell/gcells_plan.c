@@ -77,7 +77,7 @@ INT PX(local_size_gc_internal)(
   free(gc_below); free(gc_above);
   return mem;
 }
-
+#include <stdio.h>
 
 /* pfft_flag in {0, PFFT_TRANSPOSED_IN, PFFT_TRANSPOSED_OUT} */
 PX(gcplan) PX(plan_rgc_internal)(
@@ -141,6 +141,9 @@ PX(gcplan) PX(plan_rgc_internal)(
   for(int t=rnk_pm; t<rnk_n; t++)
     ths->loc_n[t] = ths->n[t];
   free(dummy);
+
+  for (INT t=0; t<rnk_n; t++)
+    printf("%d, loc_n: %d\n", t, ths->loc_n[t]);
 
   /* calculate 'ngc' from transposed arrays */
   for(int t=0; t<rnk_n; t++)

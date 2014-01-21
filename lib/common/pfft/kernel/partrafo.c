@@ -414,7 +414,7 @@ static void malloc_and_split_cart_procmesh(
 
 
 
-
+#include <stdio.h>
 
 static void save_param_into_plan(
     int rnk_n, const INT *n, const INT *ni, const INT *no,
@@ -439,6 +439,8 @@ static void save_param_into_plan(
     ths->iblock[t] = iblock[t];
     ths->mblock[t] = mblock[t];
     ths->oblock[t] = oblock[t];
+
+    printf("%d: ib: %d, mb: %d, ob: %d\n", t, iblock[t], mblock[t], oblock[t]);
   }
 
   MPI_Comm_dup(comm_cart, &ths->comm_cart);

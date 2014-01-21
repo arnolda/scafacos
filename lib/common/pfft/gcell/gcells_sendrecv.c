@@ -22,6 +22,8 @@
 #include "ipfft.h"
 #include "util.h"
 
+#include <stdio.h>
+
 /* use MPI_Datatype to send ghostcells */
 /* This option is more comfortable for programming and avoids extra buffers for send/recv.
  * However the buffered send/recv is slightly faster. */
@@ -176,6 +178,9 @@ static void exchange_gcells_above_along_one_dim(
 
   localArrayStart  = localArrayEnd = ths->gc_below[dim];
   localArrayEnd   += ths->loc_n[dim];
+
+
+  printf("g: %d, d: %d, b: %d, l: %d\n", globalArraySize, dim, ths->blk[dim], ths->loc_n[dim]);
 
 #if PFFT_DEBUG_GHOSTCELLS
   int myrank; MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
