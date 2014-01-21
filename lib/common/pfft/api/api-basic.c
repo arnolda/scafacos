@@ -48,6 +48,8 @@ static void vector_index(
     int rnk, INT k, const INT *n,
     INT *kvec);
 
+static void complex_conjugate(
+    R* data, const int rnk_n, const int rnk_pm, const INT *n, const MPI_Comm *comms_pm, INT *block);
 
 /* wrappers for fftw init and cleanup */
 void PX(init) (void){
@@ -105,6 +107,25 @@ static void vector_index(
     k = (k - kvec[t])/n[t];
   }
 }
+
+
+static void complex_conjugate(
+    R* data, const int rnk_n, const int rnk_pm, const INT *n, const MPI_Comm *comms_pm, INT *block
+    )
+{
+  INT local_n_total = 1;
+
+  for (int t=0; t<rnk_pm; t++)
+    local_n_total *= PX(local_block_size_shifted)(n[t], block[t], 0, comms_pm[t]);
+  for (int t=rnk_pm; t<rnk_n-1; t++)
+    local_n_total *= n[t];
+
+  local_n_total *= n[rnk_n-1]/2 + 1;
+
+  for (INT k=0; k<local_n_total; k++)
+    data[1+2*k] *= -1;
+}
+
 
 void PX(init_input_complex_3d)(
     const INT *n, const INT *local_n, const INT *local_start,
@@ -725,6 +746,9 @@ void PX(execute)(
 
   r = ths->rnk_pm;
 
+  if ((ths->trafo_flag & PFFTI_TRAFO_C2R) && (ths->sign == PFFT_FORWARD))
+    complex_conjugate(ths->in, ths->rnk_n, ths->rnk_pm, ths->ni, ths->comms_pm, ths->iblock);
+
   ths->timer->whole -= MPI_Wtime();
 
   /* twiddle inputs in order to get outputs shifted by n/2 */
@@ -751,7 +775,10 @@ void PX(execute)(
   ths->timer->otwiddle -= MPI_Wtime(); 
   if(ths->pfft_flags & PFFT_SHIFTED_IN)
     twiddle_output(ths);
-  ths->timer->otwiddle += MPI_Wtime(); 
+  ths->timer->otwiddle += MPI_Wtime();
+
+  if ((ths->trafo_flag & PFFTI_TRAFO_R2C) && (ths->sign == PFFT_BACKWARD))
+    complex_conjugate(ths->out, ths->rnk_n, ths->rnk_pm, ths->no, ths->comms_pm, ths->oblock);
 
   ths->timer->iter++;
   ths->timer->whole += MPI_Wtime();
