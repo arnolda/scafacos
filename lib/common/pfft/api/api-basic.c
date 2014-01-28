@@ -746,11 +746,6 @@ void PX(execute)(
 
   r = ths->rnk_pm;
 
-/*  for (INT d=0; d < ths->rnk_n; d++)
-  PX(fprintf)(MPI_COMM_WORLD, stderr,
-      "d: %d, n: %d, ni: %d, no: %d, rnk_n: %d, rnk_pm: %d, lb: %d\n", d, ths->n[d], ths->ni[d], ths->no[d], ths->rnk_n, ths->rnk_pm, (d < ths->rnk_pm) ? PX(local_block_size_shifted)(ths->n[d], ths->mblock[d], 0, ths->comms_pm[d]) : 0);
-      */
-
   if ((ths->trafo_flag & PFFTI_TRAFO_C2R) && (ths->sign == PFFT_FORWARD))
     complex_conjugate(ths->in, ths->rnk_n, ths->rnk_pm, ths->ni, ths->comms_pm, ths->iblock);
 
