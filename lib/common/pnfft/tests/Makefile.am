@@ -32,7 +32,8 @@ check_PROGRAMS += \
 	pnfft_test \
 	pnfft_test_adv \
 	pnfft_test_adv_c2r \
-	simple_test_c2r_c2c_compare
+	simple_test_c2r_c2c_compare_real \
+	simple_test_c2r_c2c_compare_complex
 #endif
 
 EXTRA_DIST = \
