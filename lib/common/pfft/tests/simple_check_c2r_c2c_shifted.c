@@ -3,7 +3,7 @@
 #include <math.h>
 #include <pfft.h>
 
-void init_input_c2r(const int rnk_n, const ptrdiff_t *n, const ptrdiff_t *local_ni, const ptrdiff_t *local_i_start, pfft_complex *data);
+static void init_input(const ptrdiff_t *N, const ptrdiff_t *local_N, const ptrdiff_t *local_N_start, pfft_complex *data);
 
 int main(int argc, char **argv)
 {
@@ -12,13 +12,13 @@ int main(int argc, char **argv)
   ptrdiff_t alloc_local;
   ptrdiff_t local_ni[3], local_i_start[3];
   ptrdiff_t local_no[3], local_o_start[3];
-  double err, *out;
-  pfft_complex *in, *in_check;
+  double err;
+  pfft_complex *in, *in_check, *out;
   pfft_plan plan_forw=NULL, plan_back=NULL;
   MPI_Comm comm_cart_2d;
   
   /* Set size of FFT and process mesh */
-  n[0] = 2; n[1] = 2; n[2] = 4;
+  n[0] = 2; n[1] = 2; n[2] = 6;
   np[0] = 2; np[1] = 2;
   
   /* Initialize MPI and PFFT */
@@ -33,50 +33,45 @@ int main(int argc, char **argv)
   }
   
   /* Get parameters of data distribution */
-  alloc_local = pfft_local_size_dft_c2r_3d(n, comm_cart_2d, PFFT_TRANSPOSED_NONE,
+  alloc_local = pfft_local_size_dft_3d(n, comm_cart_2d, PFFT_TRANSPOSED_NONE| PFFT_SHIFTED_IN | PFFT_SHIFTED_OUT,
       local_ni, local_i_start, local_no, local_o_start);
 
   /* Allocate memory */
   in  = pfft_alloc_complex(alloc_local);
   in_check = pfft_alloc_complex(alloc_local);
-  out = pfft_alloc_real(2 * alloc_local);
+  out = pfft_alloc_complex(alloc_local);
 
 
   /* Plan parallel forward FFT */
-  plan_forw = pfft_plan_dft_c2r_3d(
-      n, in, out, comm_cart_2d, PFFT_FORWARD, PFFT_TRANSPOSED_NONE| PFFT_MEASURE| PFFT_DESTROY_INPUT);
+  plan_forw = pfft_plan_dft_3d(
+      n, in, out, comm_cart_2d, PFFT_FORWARD, PFFT_TRANSPOSED_NONE| PFFT_MEASURE| PFFT_DESTROY_INPUT| PFFT_SHIFTED_IN | PFFT_SHIFTED_OUT);
 
   /* Plan parallel backward FFT */
-  plan_back = pfft_plan_dft_r2c_3d(
-      n, out, in, comm_cart_2d, PFFT_BACKWARD, PFFT_TRANSPOSED_NONE| PFFT_MEASURE| PFFT_DESTROY_INPUT);
+  plan_back = pfft_plan_dft_3d(
+      n, out, in, comm_cart_2d, PFFT_BACKWARD, PFFT_TRANSPOSED_NONE| PFFT_MEASURE| PFFT_DESTROY_INPUT| PFFT_SHIFTED_IN | PFFT_SHIFTED_OUT);
 
   /* Initialize input with random numbers */
-//  m = 0;
-//  for(int k0=0; k0<n[0]; k0++){
-//    for(int k1=0; k1<n[1]; k1++){
-//      for(int k2=0; k2<n[2]; k2++, m++)
-//        in[m] = 1000/(m+1);
-//      for(int k2=n[2]; k2<n[2]/2+1; k2++, m++)
-//        in[m] = 0;
-//    }
-//  }
-  
-  init_input_c2r(3, n, local_ni, local_i_start, in_check);
-  init_input_c2r(3, n, local_ni, local_i_start, in);
+  init_input(n, local_ni, local_i_start, in_check);
+  init_input(n, local_ni, local_i_start, in);
 
-  pfft_apr_complex_3d(in, local_ni, local_i_start, "c2r output:\n", comm_cart_2d);
+  pfft_apr_complex_3d(in, local_ni, local_i_start, "c2c input:\n", comm_cart_2d);
 
   /* execute parallel forward FFT */
   pfft_execute(plan_forw);
 
+  pfft_apr_complex_3d(out, local_no, local_o_start, "c2c output:\n", comm_cart_2d);
   
   /* execute parallel backward FFT */
   pfft_execute(plan_back);
   
+  pfft_apr_complex_3d(in, local_ni, local_i_start, "c2c^ output:\n", comm_cart_2d);
+
   /* Scale data */
   for(ptrdiff_t l=0; l < local_ni[0] * local_ni[1] * local_ni[2]; l++)
     in[l] /= (n[0]*n[1]*n[2]);
   
+  pfft_apr_complex_3d(in, local_ni, local_i_start, "c2c^ output (scaled):\n", comm_cart_2d);
+
   /* Print error of back transformed data */
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -102,21 +97,18 @@ int main(int argc, char **argv)
   return 0;
 }
 
-void init_input_c2r(const int rnk_n, const ptrdiff_t *n, const ptrdiff_t *local_ni, const ptrdiff_t *local_i_start, pfft_complex *data)
+#define DATA_INIT(i) (( (double)1000 ) / ( (double)( (i) == 0 ? 1 : i) ))
+
+static void init_input(const ptrdiff_t *N, const ptrdiff_t *local_N, const ptrdiff_t *local_N_start, pfft_complex *data)
 {
-  ptrdiff_t ln_tot = pfft_prod_INT(rnk_n, local_ni);
-  ptrdiff_t *pn = malloc(sizeof(ptrdiff_t) * rnk_n);
-
-  for (int k=0; k<rnk_n; k++)
-    pn[k] = n[k];
-  pn[rnk_n-1] = pn[rnk_n-1]/2 + 1;
-
-  pfft_init_input_complex(rnk_n, pn, local_ni, local_i_start, data);
-
-  if (local_i_start[rnk_n-1] == 0)
-    for(int k=0; k<ln_tot; k += local_ni[rnk_n-1])
-      data[k] = 0;
-  if ((n[rnk_n-1]%2 == 0) && (local_i_start[rnk_n-1] + local_ni[rnk_n-1] == pn[rnk_n-1]))
-    for(int k=pn[rnk_n-1]-1 - local_i_start[rnk_n-1]; k<ln_tot; k+= local_ni[rnk_n-1])
-      data[k] = creal((double complex)data[k]);
+  int m = 0;
+  for(ptrdiff_t k0=local_N_start[0]; k0<local_N_start[0]+local_N[0]; k0++)
+    for(ptrdiff_t k1=local_N_start[1]; k1<local_N_start[1]+local_N[1]; k1++)
+      for(ptrdiff_t k2=local_N_start[2]; k2<local_N_start[2]+local_N[2]; k2++, m++) {
+        if ((k2 == 0) || (k2 == -N[2]/2))
+          data[m] = DATA_INIT(k0+k1)+abs(k2);
+        else
+          data[m] = DATA_INIT(k0+k1)+abs(k2) + I*DATA_INIT(k0+k1)*(k2);
+      }
 }
+
